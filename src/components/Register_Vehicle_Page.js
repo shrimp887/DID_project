@@ -3,12 +3,13 @@ import Web3 from "web3";
 import contractABI from "../abis/AutonomousVehicleDID.json";
 
 const RegisterVehiclePage = () => {
-  const [vehicleModel, setVehicleModel] = useState("");
-  const [vehicleNumber, setVehicleNumber] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [vehicleModel, setVehicleModel] = useState(""); // 차량 모델 상태 변수
+  const [vehicleNumber, setVehicleNumber] = useState(""); // 차량 번호 상태 변수
+  const [successMessage, setSuccessMessage] = useState(""); // 성공 메시지 상태
+  const [errorMessage, setErrorMessage] = useState(""); // 에러 메시지 상태
   const [did, setDid] = useState(""); // DID 상태 관리
 
+  // MetaMask에서 계정 정보를 불러오고 DID 설정
   useEffect(() => {
     const loadAccount = async () => {
       try {
@@ -26,7 +27,19 @@ const RegisterVehiclePage = () => {
     loadAccount();
   }, []);
 
+  // 차량 번호 형식 검증 함수
+  const validateVehicleNumber = (number) => {
+    const vehicleNumberRegex = /^[0-9]{2,3}[가-힣][0-9]{4}$/; // 2~3자리 숫자 + 1글자 한글 + 4자리 숫자 형식
+    return vehicleNumberRegex.test(number); // 정규식 검사 결과 반환
+  };
+
+  // 차량 등록 함수
   const registerVehicle = async () => {
+    if (!validateVehicleNumber(vehicleNumber)) {
+      setErrorMessage("차량 번호 형식이 올바르지 않습니다. (예: 12가3456)");
+      return;
+    }
+
     try {
       const web3 = new Web3(window.ethereum);
       const accounts = await web3.eth.getAccounts();
@@ -38,8 +51,10 @@ const RegisterVehiclePage = () => {
         .registerVehicle(did, vehicleModel, vehicleNumber, "공개키")
         .send({ from: account });
       setSuccessMessage("차량이 성공적으로 등록되었습니다.");
+      setErrorMessage(""); // 성공 시 에러 메시지 제거
     } catch (error) {
       setErrorMessage("차량 등록에 실패했습니다.");
+      setSuccessMessage(""); // 실패 시 성공 메시지 제거
       console.error(error);
     }
   };
@@ -62,8 +77,8 @@ const RegisterVehiclePage = () => {
         onChange={(e) => setVehicleNumber(e.target.value)}
       />
       <button onClick={registerVehicle}>등록</button>
-      {successMessage && <p>{successMessage}</p>}
-      {errorMessage && <p>{errorMessage}</p>}
+      {successMessage && <p style={{ color: "green" }}>{successMessage}</p>}
+      {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
     </div>
   );
 };
