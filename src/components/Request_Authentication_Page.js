@@ -29,6 +29,19 @@ const RequestAuthenticationPage = () => {
       const contractAddress = "0x690c4159fe824c5fdc26907dc85a7cc2862bc21b";
       const contract = new web3.eth.Contract(contractABI, contractAddress);
 
+      // 차량 번호로 등록된 차량이 있는지 확인
+      const vehicleInfo = await contract.methods
+        .getVehicleByNumber(vehicleNumber) // 차량 정보 조회
+        .call();
+
+      if (!vehicleInfo[3]) {
+        // 등록 여부 확인
+        setMessage("해당 차량은 등록되지 않았습니다.");
+        setIsError(true); // 에러 메시지 설정
+        return;
+      }
+
+      // 인증 요청 전송
       await contract.methods
         .requestAuthentication(vehicleNumber)
         .send({ from: account });

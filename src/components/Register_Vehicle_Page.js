@@ -47,6 +47,13 @@ const RegisterVehiclePage = () => {
       const contractAddress = "0x690c4159fe824c5fdc26907dc85a7cc2862bc21b";
       const contract = new web3.eth.Contract(contractABI, contractAddress);
 
+      // 입력된 DID로 등록된 차량 정보 확인
+      const vehicle = await contract.methods.vehicles(account).call(); // 현재 계정의 차량 정보 가져오기
+      if (vehicle.isRegistered) {
+        setErrorMessage("이미 등록된 차량이 있습니다."); // 차량이 이미 등록된 경우 메시지 출력
+        return;
+      }
+
       await contract.methods
         .registerVehicle(did, vehicleModel, vehicleNumber, "공개키")
         .send({ from: account });
@@ -63,7 +70,7 @@ const RegisterVehiclePage = () => {
     <div className="register-vehicle-page">
       <h2>차량 등록</h2>
       <p>YOUR DID</p>
-      <p> {did || "MetaMask 계정이 없습니다"}</p> {/* DID 표시 */}
+      <p>{did || "MetaMask 계정이 없습니다"}</p> {/* DID 표시 */}
       <input
         type="text"
         placeholder="차량 모델"
