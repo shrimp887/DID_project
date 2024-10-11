@@ -24,7 +24,6 @@ const CheckVehiclePage = () => {
 
     try {
       const web3 = new Web3(window.ethereum);
-      const networkId = await web3.eth.net.getId();
       const contractAddress = "0x690c4159fe824c5fdc26907dc85a7cc2862bc21b";
       const contract = new web3.eth.Contract(contractABI, contractAddress);
 
