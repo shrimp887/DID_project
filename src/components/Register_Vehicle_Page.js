@@ -44,7 +44,7 @@ const RegisterVehiclePage = () => {
       const web3 = new Web3(window.ethereum);
       const accounts = await web3.eth.getAccounts();
       const account = accounts[0];
-      const contractAddress = "0x690c4159fe824c5fdc26907dc85a7cc2862bc21b";
+      const contractAddress = "0xf08034d4395a2695871b05812310a692ad3185c2";
       const contract = new web3.eth.Contract(contractABI, contractAddress);
 
       // 입력된 DID로 등록된 차량 정보 확인

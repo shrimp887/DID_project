@@ -1,5 +1,18 @@
 [
   {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_vehicleNumber",
+        "type": "string"
+      }
+    ],
+    "name": "acceptAuthentication",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "anonymous": false,
     "inputs": [
       {
@@ -12,6 +25,12 @@
         "indexed": false,
         "internalType": "address",
         "name": "requester",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "receiver",
         "type": "address"
       }
     ],
@@ -42,6 +61,67 @@
     ],
     "name": "AuthenticationVerified",
     "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "disconnectVehicle",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_did",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_vehicleModel",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_vehicleNumber",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_publicKey",
+        "type": "string"
+      }
+    ],
+    "name": "registerVehicle",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_vehicleNumber",
+        "type": "string"
+      }
+    ],
+    "name": "rejectAuthentication",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_vehicleNumber",
+        "type": "string"
+      }
+    ],
+    "name": "requestAuthentication",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
     "anonymous": false,
@@ -86,6 +166,30 @@
         "internalType": "bool",
         "name": "isActive",
         "type": "bool"
+      },
+      {
+        "internalType": "bool",
+        "name": "isVerified",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "connectedVehicle",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
       }
     ],
     "stateMutability": "view",
@@ -123,47 +227,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "_did",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "_vehicleModel",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "_vehicleNumber",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "_publicKey",
-        "type": "string"
-      }
-    ],
-    "name": "registerVehicle",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "_vehicleNumber",
-        "type": "string"
-      }
-    ],
-    "name": "requestAuthentication",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -227,25 +290,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "_vehicleNumber",
-        "type": "string"
-      }
-    ],
-    "name": "verifyAuthentication",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "nonpayable",
     "type": "function"
   }
 ]

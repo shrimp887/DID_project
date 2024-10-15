@@ -27,7 +27,7 @@ const CheckVehiclePage = () => {
   const checkVehicle = async (account) => {
     try {
       const web3 = new Web3(window.ethereum);
-      const contractAddress = "0x690c4159fe824c5fdc26907dc85a7cc2862bc21b";
+      const contractAddress = "0xf08034d4395a2695871b05812310a692ad3185c2";
       const contract = new web3.eth.Contract(contractABI, contractAddress);
 
       const result = await contract.methods.vehicles(account).call(); // 현재 계정의 차량 정보 가져오기
