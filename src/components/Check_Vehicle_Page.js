@@ -6,6 +6,7 @@ const CheckVehiclePage = () => {
   const [vehicleInfo, setVehicleInfo] = useState(null); // 차량 정보 상태 변수
   const [errorMessage, setErrorMessage] = useState(""); // 에러 메시지 상태 변수
   const [account, setAccount] = useState(""); // 사용자의 계정 상태 변수
+  const contractAddress = "0x11752b7e7164cbabcc15cf539808cc53bef659d5";
 
   // 컴포넌트가 마운트될 때 사용자 계정 정보 가져오기
   useEffect(() => {
@@ -27,7 +28,6 @@ const CheckVehiclePage = () => {
   const checkVehicle = async (account) => {
     try {
       const web3 = new Web3(window.ethereum);
-      const contractAddress = "0xf08034d4395a2695871b05812310a692ad3185c2";
       const contract = new web3.eth.Contract(contractABI, contractAddress);
 
       const result = await contract.methods.vehicles(account).call(); // 현재 계정의 차량 정보 가져오기

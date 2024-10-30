@@ -7,6 +7,7 @@ const LogAuthenticationPage = () => {
   const [account, setAccount] = useState("");
   const [web3, setWeb3] = useState(null);
   const [loading, setLoading] = useState(true);
+  const contractAddress = "0x11752b7e7164cbabcc15cf539808cc53bef659d5";
 
   useEffect(() => {
     const loadWeb3 = async () => {
@@ -30,10 +31,8 @@ const LogAuthenticationPage = () => {
 
   // 요청한 사용자의 차량 번호를 가져오는 함수
   const getVehicleNumberByRequester = async (requesterAddress) => {
-    const contractAddress = "0xf08034d4395a2695871b05812310a692ad3185c2";
     const contract = new web3.eth.Contract(contractABI, contractAddress);
 
-    // 요청자 계정에 등록된 차량 정보 가져오기
     const vehicle = await contract.methods.vehicles(requesterAddress).call();
     return vehicle.vehicleNumber;
   };
@@ -42,36 +41,75 @@ const LogAuthenticationPage = () => {
   const fetchAuthenticationLogs = async () => {
     try {
       setLoading(true);
-      const contractAddress = "0xf08034d4395a2695871b05812310a692ad3185c2";
       const contract = new web3.eth.Contract(contractABI, contractAddress);
 
-      // "AuthenticationRequested" 이벤트를 가져와 최근 10개만 사용
-      const events = await contract.getPastEvents("AuthenticationRequested", {
-        filter: { receiver: account },
-        fromBlock: 0,
-        toBlock: "latest",
-      });
+      // 요청 이벤트 조회
+      const requestEvents = await contract.getPastEvents(
+        "AuthenticationRequested",
+        {
+          filter: { receiver: account },
+          fromBlock: 0,
+          toBlock: "latest",
+        }
+      );
 
-      // 요청자 계정으로 차량 번호를 가져와 로그 생성
-      const logsWithVehicleNumbers = await Promise.all(
-        events
+      // 수락/거절 이벤트 조회
+      const verificationEvents = await contract.getPastEvents(
+        "AuthenticationVerified",
+        {
+          filter: { requester: account },
+          fromBlock: 0,
+          toBlock: "latest",
+        }
+      );
+
+      // 수락/거절 여부를 확인하여 상태를 업데이트
+      const logsWithDetails = await Promise.all(
+        requestEvents
           .reverse()
           .slice(0, 10)
           .map(async (event) => {
             const vehicleNumber = await getVehicleNumberByRequester(
               event.returnValues.requester
             );
+            const timestamp = parseInt(event.returnValues.timestamp) * 1000;
+            const formattedTimestamp = new Date(timestamp).toLocaleString(
+              "ko-KR",
+              {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: false,
+              }
+            );
+
+            // 해당 요청에 대한 인증 상태를 확인
+            let status = "만료됨"; // 기본적으로 만료로 설정
+            const verification = verificationEvents.find(
+              (vEvent) =>
+                vEvent.returnValues.vehicleNumber ===
+                event.returnValues.vehicleNumber
+            );
+
+            if (verification) {
+              status = verification.returnValues.success ? "수락됨" : "거절됨";
+            } else if (Date.now() - timestamp < 60000) {
+              status = "대기 중"; // 1분 이내라면 대기 중으로 표시
+            }
+
             return {
               vehicleNumber,
               requester: event.returnValues.requester,
-              timestamp: new Date(
-                event.returnValues.timestamp * 1000
-              ).toLocaleString(),
+              timestamp: formattedTimestamp,
+              status,
             };
           })
       );
 
-      setLogs(logsWithVehicleNumbers);
+      setLogs(logsWithDetails);
       setLoading(false);
     } catch (error) {
       console.error("로그 가져오기 실패:", error);
@@ -91,6 +129,7 @@ const LogAuthenticationPage = () => {
               <th>차량 번호</th>
               <th>요청자</th>
               <th>요청 시간</th>
+              <th>상태</th>
             </tr>
           </thead>
           <tbody>
@@ -99,6 +138,7 @@ const LogAuthenticationPage = () => {
                 <td>{log.vehicleNumber}</td>
                 <td>{log.requester}</td>
                 <td>{log.timestamp}</td>
+                <td>{log.status}</td>
               </tr>
             ))}
           </tbody>

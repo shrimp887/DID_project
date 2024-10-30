@@ -12,14 +12,13 @@ import "./App.css";
 const App = () => {
   const [account, setAccount] = useState("");
   const [web3, setWeb3] = useState(null);
+  const [contract, setContract] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [requestDetails, setRequestDetails] = useState(null);
-  const [requestResult, setRequestResult] = useState("");
-  const [connectedVehicle, setConnectedVehicle] =
-    useState("연결된 차량이 없습니다.");
+  const [resultModalMessage, setResultModalMessage] = useState("");
+  const contractAddress = "0x11752b7e7164cbabcc15cf539808cc53bef659d5";
 
-  // Web3 및 MetaMask 계정 연결
   useEffect(() => {
     const loadWeb3 = async () => {
       if (window.ethereum) {
@@ -29,6 +28,11 @@ const App = () => {
           const accounts = await web3Instance.eth.getAccounts();
           setAccount(accounts[0]);
           setWeb3(web3Instance);
+          const contractInstance = new web3Instance.eth.Contract(
+            contractABI,
+            contractAddress
+          );
+          setContract(contractInstance);
           console.log("MetaMask 연결 성공");
         } catch (error) {
           setErrorMessage("MetaMask 연결을 거부하였습니다. 다시 시도하세요.");
@@ -45,79 +49,96 @@ const App = () => {
     loadWeb3();
   }, []);
 
-  // 인증 요청 이벤트 리스너 설정
+  // 폴링 방식으로 인증 요청 이벤트 확인
   useEffect(() => {
-    if (web3 && account) {
-      const contractAddress = "0xf08034d4395a2695871b05812310a692ad3185c2";
-      const contract = new web3.eth.Contract(contractABI, contractAddress);
+    const fetchEvents = async () => {
+      if (contract && account) {
+        try {
+          const events = await contract.getPastEvents(
+            "AuthenticationRequested",
+            {
+              fromBlock: "latest",
+            }
+          );
 
-      console.log("이벤트 리스너 설정 중...");
+          for (const event of events) {
+            const {
+              vehicleNumber: requesterVehicle,
+              requester,
+              receiver,
+            } = event.returnValues;
 
-      // 인증 요청 리스너 추가
-      contract.events.AuthenticationRequested(
-        {
-          filter: { receiver: account },
-          fromBlock: "latest",
-        },
-        async (error, event) => {
-          if (error) {
-            console.error("이벤트 리스닝 오류:", error);
-            return;
+            if (receiver.toLowerCase() === account.toLowerCase()) {
+              // 요청자의 차량 번호 정보 가져오기
+              const requesterVehicleInfo = await contract.methods
+                .getVehicleByNumber(requesterVehicle)
+                .call();
+
+              setRequestDetails({
+                vehicleNumber: requesterVehicleInfo[2], // 요청자의 차량 번호로 설정
+                requester,
+              });
+              setShowModal(true);
+            }
           }
-
-          console.log("인증 요청 이벤트 수신:", event);
-
-          const { requester } = event.returnValues;
-
-          // 요청자의 차량 번호 가져오기
-          const vehicleNumber = await getVehicleNumberByRequester(requester);
-
-          // 요청 세부 정보와 차량 번호 설정
-          setRequestDetails({ vehicleNumber, requester });
-          setShowModal(true);
+        } catch (error) {
+          console.error("이벤트 가져오기 오류:", error);
         }
-      );
-    }
-  }, [web3, account]);
+      }
+    };
 
-  // 요청자의 차량 번호를 조회하는 함수
-  const getVehicleNumberByRequester = async (requesterAddress) => {
-    const contractAddress = "0xf08034d4395a2695871b05812310a692ad3185c2";
-    const contract = new web3.eth.Contract(contractABI, contractAddress);
-    const vehicle = await contract.methods.vehicles(requesterAddress).call();
-    return vehicle.vehicleNumber;
-  };
+    const intervalId = setInterval(fetchEvents, 1000);
+    return () => clearInterval(intervalId);
+  }, [contract, account]);
 
-  // 인증 요청 수락 함수
+  useEffect(() => {
+    const pollForAuthenticationResult = async () => {
+      if (contract && account) {
+        try {
+          const events = await contract.getPastEvents(
+            "AuthenticationVerified",
+            {
+              filter: { requester: account },
+              fromBlock: "latest",
+            }
+          );
+
+          for (const event of events) {
+            const { vehicleNumber, success, receiver } = event.returnValues;
+            const receiverVehicleInfo = await contract.methods
+              .getVehicleByNumber(vehicleNumber)
+              .call();
+
+            setResultModalMessage(
+              success
+                ? `${receiverVehicleInfo[2]} 차량과 인증되었습니다.`
+                : `${receiverVehicleInfo[2]} 차량이 인증을 거절했습니다.`
+            );
+          }
+        } catch (error) {
+          console.error("이벤트 가져오기 오류:", error);
+        }
+      }
+    };
+
+    const intervalId = setInterval(pollForAuthenticationResult, 1000);
+    return () => clearInterval(intervalId);
+  }, [contract, account]);
+
   const handleAccept = async () => {
-    const contractAddress = "0xf08034d4395a2695871b05812310a692ad3185c2";
-    const contract = new web3.eth.Contract(contractABI, contractAddress);
-
     await contract.methods
       .acceptAuthentication(requestDetails.vehicleNumber)
       .send({ from: account });
 
-    setRequestResult("인증 요청이 수락되었습니다.");
-    setConnectedVehicle(`${requestDetails.vehicleNumber} 연결 중...`);
     setShowModal(false);
   };
 
-  // 인증 요청 거부 함수
   const handleReject = async () => {
-    const contractAddress = "0xf08034d4395a2695871b05812310a692ad3185c2";
-    const contract = new web3.eth.Contract(contractABI, contractAddress);
-
     await contract.methods
       .rejectAuthentication(requestDetails.vehicleNumber)
       .send({ from: account });
 
-    setRequestResult("인증 요청이 거절되었습니다.");
     setShowModal(false);
-  };
-
-  // 연결 끊기 함수
-  const handleDisconnect = () => {
-    setConnectedVehicle("연결된 차량이 없습니다.");
   };
 
   return (
@@ -127,10 +148,6 @@ const App = () => {
         {account ? (
           <div>
             <p>MetaMask 연결된 계정: {account}</p>
-            <p>{connectedVehicle}</p>
-            {connectedVehicle !== "연결된 차량이 없습니다." && (
-              <button onClick={handleDisconnect}>연결 끊기</button>
-            )}
           </div>
         ) : (
           <p style={{ color: "red" }}>
@@ -165,20 +182,32 @@ const App = () => {
             element={<RequestAuthenticationPage />}
           />
           <Route path="/DID_project/logs" element={<LogAuthenticationPage />} />
+          <Route path="/DID_project" exact element={<HomePage />} />
         </Routes>
 
-        {/* 모달 표시 */}
+        {/* 인증 요청 수신 모달 */}
         {showModal && (
           <Modal
-            message={`차량 ${requestDetails.vehicleNumber}가 인증 요청을 보냈습니다.`}
+            title="인증 요청"
+            message={`${requestDetails?.vehicleNumber} 차량으로부터 인증 요청이 도착했습니다.`}
             onAccept={handleAccept}
             onReject={handleReject}
-            requestResult={requestResult}
+          />
+        )}
+
+        {/* 인증 결과 모달 */}
+        {resultModalMessage && (
+          <Modal
+            title="인증 결과"
+            message={resultModalMessage}
+            onClose={() => setResultModalMessage("")}
           />
         )}
       </div>
     </Router>
   );
 };
+
+const HomePage = () => <div>NSbit</div>;
 
 export default App;

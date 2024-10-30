@@ -22,9 +22,12 @@
 }
 
 .modal-buttons {
-  margin-top: 20px; /* 버튼 간 간격 추가 */
+  display: flex;
+  justify-content: space-around; /* 버튼 사이 간격 균등 분배 */
+  margin-top: 20px; /* 버튼 위아래 간격 */
 }
 
 .modal-buttons button {
-  margin: 0 5px; /* 버튼 간 간격 */
+  padding: 10px 10px; /* 버튼 안쪽 여백 */
+  margin: 0 10px; /* 버튼 좌우 간격 */
 }

@@ -8,6 +8,7 @@ const RegisterVehiclePage = () => {
   const [successMessage, setSuccessMessage] = useState(""); // 성공 메시지 상태
   const [errorMessage, setErrorMessage] = useState(""); // 에러 메시지 상태
   const [did, setDid] = useState(""); // DID 상태 관리
+  const contractAddress = "0x11752b7e7164cbabcc15cf539808cc53bef659d5";
 
   // MetaMask에서 계정 정보를 불러오고 DID 설정
   useEffect(() => {
@@ -44,7 +45,6 @@ const RegisterVehiclePage = () => {
       const web3 = new Web3(window.ethereum);
       const accounts = await web3.eth.getAccounts();
       const account = accounts[0];
-      const contractAddress = "0xf08034d4395a2695871b05812310a692ad3185c2";
       const contract = new web3.eth.Contract(contractABI, contractAddress);
 
       // 입력된 DID로 등록된 차량 정보 확인
