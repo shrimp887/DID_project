@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Web3 from "web3";
 import contractABI from "../abis/AutonomousVehicleDID.json";
 import Modal from "./Request_Modal"; // 모달 컴포넌트 가져오기
@@ -11,6 +11,53 @@ const RequestAuthenticationPage = () => {
   const [requestStatus, setRequestStatus] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [requestResult, setRequestResult] = useState(""); // 요청 결과 상태
+  const [web3, setWeb3] = useState(null);
+  const [account, setAccount] = useState("");
+
+  useEffect(() => {
+    const loadWeb3 = async () => {
+      if (window.ethereum) {
+        const web3Instance = new Web3(window.ethereum);
+        await window.ethereum.request({ method: "eth_requestAccounts" });
+        const accounts = await web3Instance.eth.getAccounts();
+        setWeb3(web3Instance);
+        setAccount(accounts[0]);
+      }
+    };
+
+    loadWeb3();
+  }, []);
+
+  // 인증 검증 결과 이벤트 수신
+  useEffect(() => {
+    if (web3 && account) {
+      const contractAddress = "0xf08034d4395a2695871b05812310a692ad3185c2";
+      const contract = new web3.eth.Contract(contractABI, contractAddress);
+
+      // 인증 검증 이벤트 수신
+      contract.events.AuthenticationVerified(
+        {
+          filter: { requester: account }, // 요청자의 계정으로 필터링
+          fromBlock: "latest",
+        },
+        (error, event) => {
+          if (error) {
+            console.error("이벤트 리스닝 오류:", error);
+            return;
+          }
+
+          const { vehicleNumber, success } = event.returnValues;
+          if (success) {
+            setMessage(`차량 ${vehicleNumber}에 대한 인증이 수락되었습니다.`);
+          } else {
+            setMessage(`차량 ${vehicleNumber}에 대한 인증이 거절되었습니다.`);
+          }
+
+          setShowModal(false); // 모달 숨기기
+        }
+      );
+    }
+  }, [web3, account]);
 
   const validateVehicleNumber = (number) => {
     const vehicleNumberRegex = /^[0-9]{2,3}[가-힣][0-9]{4}$/;
@@ -65,6 +112,8 @@ const RequestAuthenticationPage = () => {
         setRequestStatus("");
         setShowModal(false); // 모달 숨기기
       }, 60000);
+
+      return () => clearTimeout(timeoutId); // 컴포넌트 언마운트 시 타임아웃 해제
     } catch (error) {
       setMessage("인증 요청에 실패했습니다.");
       setIsError(true);
