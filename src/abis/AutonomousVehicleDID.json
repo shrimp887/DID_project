@@ -1,18 +1,5 @@
 [
   {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "_vehicleNumber",
-        "type": "string"
-      }
-    ],
-    "name": "acceptAuthentication",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "anonymous": false,
     "inputs": [
       {
@@ -32,6 +19,12 @@
         "internalType": "address",
         "name": "receiver",
         "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
       }
     ],
     "name": "AuthenticationRequested",
@@ -69,60 +62,6 @@
     "type": "event"
   },
   {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "_did",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "_vehicleModel",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "_vehicleNumber",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "_publicKey",
-        "type": "string"
-      }
-    ],
-    "name": "registerVehicle",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "_vehicleNumber",
-        "type": "string"
-      }
-    ],
-    "name": "rejectAuthentication",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "_vehicleNumber",
-        "type": "string"
-      }
-    ],
-    "name": "requestAuthentication",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "anonymous": false,
     "inputs": [
       {
@@ -140,6 +79,19 @@
     ],
     "name": "VehicleRegistered",
     "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_vehicleNumber",
+        "type": "string"
+      }
+    ],
+    "name": "acceptAuthentication",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
     "inputs": [
@@ -201,12 +153,71 @@
         "type": "string"
       },
       {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
         "internalType": "bool",
         "name": "",
         "type": "bool"
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_did",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_vehicleModel",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_vehicleNumber",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_publicKey",
+        "type": "string"
+      }
+    ],
+    "name": "registerVehicle",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_vehicleNumber",
+        "type": "string"
+      }
+    ],
+    "name": "rejectAuthentication",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_vehicleNumber",
+        "type": "string"
+      }
+    ],
+    "name": "requestAuthentication",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

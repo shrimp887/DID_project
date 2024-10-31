@@ -6,7 +6,7 @@ const CheckVehiclePage = () => {
   const [vehicleInfo, setVehicleInfo] = useState(null); // 차량 정보 상태 변수
   const [errorMessage, setErrorMessage] = useState(""); // 에러 메시지 상태 변수
   const [account, setAccount] = useState(""); // 사용자의 계정 상태 변수
-  const contractAddress = "0x11752b7e7164cbabcc15cf539808cc53bef659d5";
+  const contractAddress = "0x914db93fbdb6e145c089029e015bbbd8a5bd5664";
 
   // 컴포넌트가 마운트될 때 사용자 계정 정보 가져오기
   useEffect(() => {

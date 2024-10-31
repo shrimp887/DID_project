@@ -9,7 +9,7 @@ const RequestAuthenticationPage = () => {
   const [loading, setLoading] = useState(false);
   const [web3, setWeb3] = useState(null);
   const [account, setAccount] = useState("");
-  const contractAddress = "0x11752b7e7164cbabcc15cf539808cc53bef659d5";
+  const contractAddress = "0x914db93fbdb6e145c089029e015bbbd8a5bd5664";
 
   useEffect(() => {
     const loadWeb3 = async () => {
@@ -43,27 +43,31 @@ const RequestAuthenticationPage = () => {
     try {
       const contract = new web3.eth.Contract(contractABI, contractAddress);
 
+      // 차량 등록 여부 확인
       const vehicleInfo = await contract.methods
         .getVehicleByNumber(vehicleNumber)
         .call();
-
-      if (!vehicleInfo[3]) {
-        setMessage("해당 차량이 존재하지 않습니다.");
+      if (!vehicleInfo[4]) {
+        setMessage("해당 차량이 등록되어 있지 않습니다.");
         setIsError(true);
         setLoading(false);
         return;
       }
 
+      // 인증 요청 전송
       await contract.methods
         .requestAuthentication(vehicleNumber)
         .send({ from: account });
-
-      setMessage("인증 요청이 전송되었습니다.");
+      setMessage("인증 요청이 성공적으로 전송되었습니다.");
       setIsError(false);
     } catch (error) {
-      setMessage("인증 요청에 실패했습니다.");
+      if (error.message.includes("An active request already exists")) {
+        setMessage("이미 활성화된 요청이 있습니다.");
+      } else {
+        setMessage("인증 요청에 실패했습니다.");
+      }
       setIsError(true);
-      console.error(error);
+      console.error("인증 요청 오류:", error);
     } finally {
       setLoading(false);
     }

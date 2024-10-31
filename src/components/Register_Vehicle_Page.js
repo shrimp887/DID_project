@@ -8,7 +8,7 @@ const RegisterVehiclePage = () => {
   const [successMessage, setSuccessMessage] = useState(""); // 성공 메시지 상태
   const [errorMessage, setErrorMessage] = useState(""); // 에러 메시지 상태
   const [did, setDid] = useState(""); // DID 상태 관리
-  const contractAddress = "0x11752b7e7164cbabcc15cf539808cc53bef659d5";
+  const contractAddress = "0x914db93fbdb6e145c089029e015bbbd8a5bd5664";
 
   // MetaMask에서 계정 정보를 불러오고 DID 설정
   useEffect(() => {

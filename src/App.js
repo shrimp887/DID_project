@@ -17,7 +17,7 @@ const App = () => {
   const [showModal, setShowModal] = useState(false);
   const [requestDetails, setRequestDetails] = useState(null);
   const [resultModalMessage, setResultModalMessage] = useState("");
-  const contractAddress = "0x11752b7e7164cbabcc15cf539808cc53bef659d5";
+  const contractAddress = "0x914db93fbdb6e145c089029e015bbbd8a5bd5664";
 
   useEffect(() => {
     const loadWeb3 = async () => {
@@ -69,13 +69,12 @@ const App = () => {
             } = event.returnValues;
 
             if (receiver.toLowerCase() === account.toLowerCase()) {
-              // 요청자의 차량 번호 정보 가져오기
               const requesterVehicleInfo = await contract.methods
                 .getVehicleByNumber(requesterVehicle)
                 .call();
 
               setRequestDetails({
-                vehicleNumber: requesterVehicleInfo[2], // 요청자의 차량 번호로 설정
+                vehicleNumber: requesterVehicleInfo[2],
                 requester,
               });
               setShowModal(true);
@@ -91,6 +90,7 @@ const App = () => {
     return () => clearInterval(intervalId);
   }, [contract, account]);
 
+  // 인증 결과 폴링 방식 확인
   useEffect(() => {
     const pollForAuthenticationResult = async () => {
       if (contract && account) {
@@ -147,7 +147,7 @@ const App = () => {
         <h1>자율 주행 차량 인증 DApp</h1>
         {account ? (
           <div>
-            <p>MetaMask 연결된 계정: {account}</p>
+            <p>MetaMask에 연결됨</p>
           </div>
         ) : (
           <p style={{ color: "red" }}>

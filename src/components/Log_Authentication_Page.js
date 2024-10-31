@@ -7,7 +7,7 @@ const LogAuthenticationPage = () => {
   const [account, setAccount] = useState("");
   const [web3, setWeb3] = useState(null);
   const [loading, setLoading] = useState(true);
-  const contractAddress = "0x11752b7e7164cbabcc15cf539808cc53bef659d5";
+  const contractAddress = "0x914db93fbdb6e145c089029e015bbbd8a5bd5664";
 
   useEffect(() => {
     const loadWeb3 = async () => {
@@ -19,7 +19,6 @@ const LogAuthenticationPage = () => {
         setAccount(accounts[0]);
       }
     };
-
     loadWeb3();
   }, []);
 
@@ -32,7 +31,6 @@ const LogAuthenticationPage = () => {
   // 요청한 사용자의 차량 번호를 가져오는 함수
   const getVehicleNumberByRequester = async (requesterAddress) => {
     const contract = new web3.eth.Contract(contractABI, contractAddress);
-
     const vehicle = await contract.methods.vehicles(requesterAddress).call();
     return vehicle.vehicleNumber;
   };
@@ -57,7 +55,7 @@ const LogAuthenticationPage = () => {
       const verificationEvents = await contract.getPastEvents(
         "AuthenticationVerified",
         {
-          filter: { requester: account },
+          filter: { receiver: account },
           fromBlock: 0,
           toBlock: "latest",
         }
@@ -72,7 +70,8 @@ const LogAuthenticationPage = () => {
             const vehicleNumber = await getVehicleNumberByRequester(
               event.returnValues.requester
             );
-            const timestamp = parseInt(event.returnValues.timestamp) * 1000;
+            const timestamp = parseInt(event.returnValues.timestamp, 10) * 1000;
+
             const formattedTimestamp = new Date(timestamp).toLocaleString(
               "ko-KR",
               {
@@ -86,23 +85,22 @@ const LogAuthenticationPage = () => {
               }
             );
 
-            // 해당 요청에 대한 인증 상태를 확인
-            let status = "만료됨"; // 기본적으로 만료로 설정
+            // 수신자의 응답 상태 확인
             const verification = verificationEvents.find(
               (vEvent) =>
                 vEvent.returnValues.vehicleNumber ===
-                event.returnValues.vehicleNumber
+                  event.returnValues.vehicleNumber &&
+                vEvent.returnValues.requester === event.returnValues.requester
             );
 
-            if (verification) {
-              status = verification.returnValues.success ? "수락됨" : "거절됨";
-            } else if (Date.now() - timestamp < 60000) {
-              status = "대기 중"; // 1분 이내라면 대기 중으로 표시
-            }
+            const status = verification
+              ? verification.returnValues.success
+                ? "수락됨"
+                : "거절됨"
+              : "응답 대기 중";
 
             return {
               vehicleNumber,
-              requester: event.returnValues.requester,
               timestamp: formattedTimestamp,
               status,
             };
@@ -127,7 +125,6 @@ const LogAuthenticationPage = () => {
           <thead>
             <tr>
               <th>차량 번호</th>
-              <th>요청자</th>
               <th>요청 시간</th>
               <th>상태</th>
             </tr>
@@ -136,7 +133,6 @@ const LogAuthenticationPage = () => {
             {logs.map((log, index) => (
               <tr key={index}>
                 <td>{log.vehicleNumber}</td>
-                <td>{log.requester}</td>
                 <td>{log.timestamp}</td>
                 <td>{log.status}</td>
               </tr>
