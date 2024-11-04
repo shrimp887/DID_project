@@ -32,10 +32,6 @@ html {
   transition: transform 0.3s ease;
 }
 
-.app:hover {
-  transform: scale(1.02);
-}
-
 .logo {
   position: absolute;
   top: 15px;

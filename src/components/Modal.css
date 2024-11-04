@@ -9,7 +9,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000; /* 다른 요소들 위에 위치 */
+  z-index: 1000;
 }
 
 /* 모달 컨테이너 */
@@ -44,7 +44,8 @@
 /* 모달 버튼 컨테이너 */
 .modal-buttons {
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
+  gap: 50px;
   margin-top: 20px;
 }
 
