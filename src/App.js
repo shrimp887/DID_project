@@ -7,6 +7,7 @@ import RegisterVehiclePage from "./components/Register_Vehicle_Page";
 import RequestAuthenticationPage from "./components/Request_Authentication_Page";
 import LogAuthenticationPage from "./components/Log_Authentication_Page";
 import Modal from "./components/Receive_Modal";
+import logo from "./assets/nsbit_icon.png";
 import "./App.css";
 
 const App = () => {
@@ -17,7 +18,7 @@ const App = () => {
   const [showModal, setShowModal] = useState(false);
   const [requestDetails, setRequestDetails] = useState(null);
   const [resultModalMessage, setResultModalMessage] = useState("");
-  const contractAddress = "0x914db93fbdb6e145c089029e015bbbd8a5bd5664";
+  const contractAddress = "0x8a134b04273b4368c4aa2b8e6524eeeeea70fe52";
 
   useEffect(() => {
     const loadWeb3 = async () => {
@@ -45,11 +46,9 @@ const App = () => {
         console.error("MetaMask가 설치되지 않았습니다.");
       }
     };
-
     loadWeb3();
   }, []);
 
-  // 폴링 방식으로 인증 요청 이벤트 확인
   useEffect(() => {
     const fetchEvents = async () => {
       if (contract && account) {
@@ -66,18 +65,19 @@ const App = () => {
               vehicleNumber: requesterVehicle,
               requester,
               receiver,
+              did,
+              vcHash,
             } = event.returnValues;
 
             if (receiver.toLowerCase() === account.toLowerCase()) {
-              const requesterVehicleInfo = await contract.methods
-                .getVehicleByNumber(requesterVehicle)
-                .call();
-
               setRequestDetails({
-                vehicleNumber: requesterVehicleInfo[2],
+                vehicleNumber: requesterVehicle,
                 requester,
+                did,
+                vcHash,
               });
               setShowModal(true);
+              break;
             }
           }
         } catch (error) {
@@ -86,11 +86,10 @@ const App = () => {
       }
     };
 
-    const intervalId = setInterval(fetchEvents, 1000);
+    const intervalId = setInterval(fetchEvents, 3000);
     return () => clearInterval(intervalId);
   }, [contract, account]);
 
-  // 인증 결과 폴링 방식 확인
   useEffect(() => {
     const pollForAuthenticationResult = async () => {
       if (contract && account) {
@@ -105,14 +104,17 @@ const App = () => {
 
           for (const event of events) {
             const { vehicleNumber, success, receiver } = event.returnValues;
+            const ownerAddress = await contract.methods
+              .vehicleOwners(vehicleNumber)
+              .call();
             const receiverVehicleInfo = await contract.methods
-              .getVehicleByNumber(vehicleNumber)
+              .vehicles(ownerAddress)
               .call();
 
             setResultModalMessage(
               success
-                ? `${receiverVehicleInfo[2]} 차량과 인증되었습니다.`
-                : `${receiverVehicleInfo[2]} 차량이 인증을 거절했습니다.`
+                ? `${receiverVehicleInfo.vehicleNumber} 차량과 인증되었습니다.`
+                : `${receiverVehicleInfo.vehicleNumber} 차량이 인증을 거절했습니다.`
             );
           }
         } catch (error) {
@@ -121,16 +123,29 @@ const App = () => {
       }
     };
 
-    const intervalId = setInterval(pollForAuthenticationResult, 1000);
+    const intervalId = setInterval(pollForAuthenticationResult, 3000);
     return () => clearInterval(intervalId);
   }, [contract, account]);
 
   const handleAccept = async () => {
-    await contract.methods
-      .acceptAuthentication(requestDetails.vehicleNumber)
-      .send({ from: account });
+    try {
+      const { vcHash } = requestDetails;
 
-    setShowModal(false);
+      if (!vcHash || vcHash === "0x") {
+        setErrorMessage("VC 해시가 올바르지 않습니다.");
+        return;
+      }
+
+      await contract.methods
+        .acceptAuthentication(requestDetails.vehicleNumber, vcHash)
+        .send({ from: account });
+
+      setShowModal(false);
+      setResultModalMessage("인증이 성공적으로 완료되었습니다.");
+    } catch (error) {
+      console.error("인증 수락 오류:", error);
+      setErrorMessage("인증 수락 중 오류가 발생했습니다.");
+    }
   };
 
   const handleReject = async () => {
@@ -144,6 +159,7 @@ const App = () => {
   return (
     <Router>
       <div className="app">
+        <img src={logo} alt="NSbit Logo" className="logo" />
         <h1>자율 주행 차량 인증 DApp</h1>
         {account ? (
           <div>
@@ -158,7 +174,7 @@ const App = () => {
         <nav>
           <ul>
             <li>
-              <Link to="/DID_project/register">차량 등록</Link>
+              <Link to="/DID_project/register">차량등록</Link>
             </li>
             <li>
               <Link to="/DID_project/check">차량 등록 확인</Link>
@@ -185,7 +201,6 @@ const App = () => {
           <Route path="/DID_project" exact element={<HomePage />} />
         </Routes>
 
-        {/* 인증 요청 수신 모달 */}
         {showModal && (
           <Modal
             title="인증 요청"
@@ -195,7 +210,6 @@ const App = () => {
           />
         )}
 
-        {/* 인증 결과 모달 */}
         {resultModalMessage && (
           <Modal
             title="인증 결과"

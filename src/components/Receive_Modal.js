@@ -1,5 +1,5 @@
 import React from "react";
-import "./Modal.css"; // 스타일 파일
+import "./Modal.css";
 
 const Modal = ({ title, message, onAccept, onReject, onClose }) => {
   return (

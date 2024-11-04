@@ -7,31 +7,24 @@ const RequestAuthenticationPage = () => {
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [web3, setWeb3] = useState(null);
   const [account, setAccount] = useState("");
-  const contractAddress = "0x914db93fbdb6e145c089029e015bbbd8a5bd5664";
+  const contractAddress = "0x8a134b04273b4368c4aa2b8e6524eeeeea70fe52";
 
   useEffect(() => {
-    const loadWeb3 = async () => {
+    const loadAccount = async () => {
       if (window.ethereum) {
-        const web3Instance = new Web3(window.ethereum);
+        const web3 = new Web3(window.ethereum);
         await window.ethereum.request({ method: "eth_requestAccounts" });
-        const accounts = await web3Instance.eth.getAccounts();
-        setWeb3(web3Instance);
+        const accounts = await web3.eth.getAccounts();
         setAccount(accounts[0]);
       }
     };
-    loadWeb3();
+    loadAccount();
   }, []);
 
-  const validateVehicleNumber = (number) => {
-    const vehicleNumberRegex = /^[0-9]{2,3}[가-힣][0-9]{4}$/;
-    return vehicleNumberRegex.test(number);
-  };
-
   const requestAuthentication = async () => {
-    if (!validateVehicleNumber(vehicleNumber)) {
-      setMessage("차량 번호 형식이 올바르지 않습니다. (예: 12가3456)");
+    if (!vehicleNumber) {
+      setMessage("차량 번호를 입력하세요.");
       setIsError(true);
       return;
     }
@@ -41,31 +34,27 @@ const RequestAuthenticationPage = () => {
     setIsError(false);
 
     try {
+      const web3 = new Web3(window.ethereum);
       const contract = new web3.eth.Contract(contractABI, contractAddress);
 
-      // 차량 등록 여부 확인
-      const vehicleInfo = await contract.methods
-        .getVehicleByNumber(vehicleNumber)
-        .call();
-      if (!vehicleInfo[4]) {
-        setMessage("해당 차량이 등록되어 있지 않습니다.");
-        setIsError(true);
-        setLoading(false);
-        return;
-      }
+      // 스마트 컨트랙트에서 DID 및 VC 해시 가져오기
+      const vehicleData = await contract.methods.vehicles(account).call();
+      const { did } = vehicleData;
 
-      // 인증 요청 전송
+      const credentialData = await contract.methods.credentials(account).call();
+      const {
+        proof: { vcHash },
+      } = credentialData;
+
+      // 스마트 컨트랙트에 인증 요청 전송
       await contract.methods
-        .requestAuthentication(vehicleNumber)
+        .requestAuthentication(vehicleNumber, did, vcHash)
         .send({ from: account });
+
       setMessage("인증 요청이 성공적으로 전송되었습니다.");
       setIsError(false);
     } catch (error) {
-      if (error.message.includes("An active request already exists")) {
-        setMessage("이미 활성화된 요청이 있습니다.");
-      } else {
-        setMessage("인증 요청에 실패했습니다.");
-      }
+      setMessage("인증 요청에 실패했습니다.");
       setIsError(true);
       console.error("인증 요청 오류:", error);
     } finally {

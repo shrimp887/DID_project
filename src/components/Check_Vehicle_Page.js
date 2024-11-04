@@ -3,10 +3,10 @@ import Web3 from "web3";
 import contractABI from "../abis/AutonomousVehicleDID.json";
 
 const CheckVehiclePage = () => {
-  const [vehicleInfo, setVehicleInfo] = useState(null); // 차량 정보 상태 변수
-  const [errorMessage, setErrorMessage] = useState(""); // 에러 메시지 상태 변수
-  const [account, setAccount] = useState(""); // 사용자의 계정 상태 변수
-  const contractAddress = "0x914db93fbdb6e145c089029e015bbbd8a5bd5664";
+  const [vehicleInfo, setVehicleInfo] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [account, setAccount] = useState("");
+  const contractAddress = "0x8a134b04273b4368c4aa2b8e6524eeeeea70fe52";
 
   // 컴포넌트가 마운트될 때 사용자 계정 정보 가져오기
   useEffect(() => {
@@ -14,32 +14,30 @@ const CheckVehiclePage = () => {
       const web3 = new Web3(window.ethereum);
       const accounts = await web3.eth.getAccounts();
       if (accounts.length > 0) {
-        setAccount(accounts[0]); // 첫 번째 계정으로 설정
-        await checkVehicle(accounts[0]); // 차량 정보 조회
+        setAccount(accounts[0]);
+        await checkVehicle(accounts[0]);
       } else {
         setErrorMessage("MetaMask 계정이 연결되지 않았습니다.");
       }
     };
 
-    loadAccount(); // 계정 정보 로드
+    loadAccount();
   }, []);
 
-  // 차량 정보 조회 함수
   const checkVehicle = async (account) => {
     try {
       const web3 = new Web3(window.ethereum);
       const contract = new web3.eth.Contract(contractABI, contractAddress);
 
-      const result = await contract.methods.vehicles(account).call(); // 현재 계정의 차량 정보 가져오기
+      const result = await contract.methods.vehicles(account).call();
 
-      // 차량 정보를 설정
       setVehicleInfo({
         did: result.did,
         model: result.vehicleModel,
         number: result.vehicleNumber,
         isRegistered: result.isRegistered,
       });
-      setErrorMessage(""); // 성공 시 에러 메시지 제거
+      setErrorMessage("");
     } catch (error) {
       setErrorMessage("차량 정보를 조회할 수 없습니다.");
       console.error(error);

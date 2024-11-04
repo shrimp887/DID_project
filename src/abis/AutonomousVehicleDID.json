@@ -9,13 +9,13 @@
         "type": "string"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
         "name": "requester",
         "type": "address"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
         "name": "receiver",
         "type": "address"
@@ -25,6 +25,18 @@
         "internalType": "uint256",
         "name": "timestamp",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "did",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "vcHash",
+        "type": "bytes32"
       }
     ],
     "name": "AuthenticationRequested",
@@ -40,13 +52,13 @@
         "type": "string"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
         "name": "requester",
         "type": "address"
       },
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
         "name": "receiver",
         "type": "address"
@@ -65,7 +77,48 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "issuer",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "subject",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "issuanceDate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "expirationDate",
+            "type": "uint256"
+          }
+        ],
         "indexed": false,
+        "internalType": "struct AutonomousVehicleDID.CredentialMetadata",
+        "name": "metadata",
+        "type": "tuple"
+      }
+    ],
+    "name": "CredentialIssued",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
         "internalType": "address",
         "name": "owner",
         "type": "address"
@@ -86,6 +139,11 @@
         "internalType": "string",
         "name": "_vehicleNumber",
         "type": "string"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "vcHash",
+        "type": "bytes32"
       }
     ],
     "name": "acceptAuthentication",
@@ -115,13 +173,18 @@
       },
       {
         "internalType": "bool",
-        "name": "isActive",
+        "name": "isVerified",
         "type": "bool"
       },
       {
-        "internalType": "bool",
-        "name": "isVerified",
-        "type": "bool"
+        "internalType": "string",
+        "name": "did",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "vcHash",
+        "type": "bytes32"
       }
     ],
     "stateMutability": "view",
@@ -130,37 +193,61 @@
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "_vehicleNumber",
-        "type": "string"
-      }
-    ],
-    "name": "getVehicleByNumber",
-    "outputs": [
-      {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
-      },
-      {
         "internalType": "address",
         "name": "",
         "type": "address"
+      }
+    ],
+    "name": "credentials",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "issuer",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "subject",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "issuanceDate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "expirationDate",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct AutonomousVehicleDID.CredentialMetadata",
+        "name": "metadata",
+        "type": "tuple"
       },
       {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "vcHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes",
+            "name": "signature",
+            "type": "bytes"
+          },
+          {
+            "internalType": "address",
+            "name": "verifier",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct AutonomousVehicleDID.Proof",
+        "name": "proof",
+        "type": "tuple"
       }
     ],
     "stateMutability": "view",
@@ -184,9 +271,19 @@
         "type": "string"
       },
       {
-        "internalType": "string",
-        "name": "_publicKey",
-        "type": "string"
+        "internalType": "bytes32",
+        "name": "_vcHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_signature",
+        "type": "bytes"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_expirationDate",
+        "type": "uint256"
       }
     ],
     "name": "registerVehicle",
@@ -213,6 +310,16 @@
         "internalType": "string",
         "name": "_vehicleNumber",
         "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_did",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_vcHash",
+        "type": "bytes32"
       }
     ],
     "name": "requestAuthentication",
@@ -268,11 +375,6 @@
         "internalType": "address",
         "name": "owner",
         "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "publicKey",
-        "type": "string"
       },
       {
         "internalType": "bool",

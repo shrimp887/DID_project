@@ -7,7 +7,7 @@ const LogAuthenticationPage = () => {
   const [account, setAccount] = useState("");
   const [web3, setWeb3] = useState(null);
   const [loading, setLoading] = useState(true);
-  const contractAddress = "0x914db93fbdb6e145c089029e015bbbd8a5bd5664";
+  const contractAddress = "0x8a134b04273b4368c4aa2b8e6524eeeeea70fe52";
 
   useEffect(() => {
     const loadWeb3 = async () => {
@@ -28,20 +28,17 @@ const LogAuthenticationPage = () => {
     }
   }, [web3, account]);
 
-  // 요청한 사용자의 차량 번호를 가져오는 함수
   const getVehicleNumberByRequester = async (requesterAddress) => {
     const contract = new web3.eth.Contract(contractABI, contractAddress);
     const vehicle = await contract.methods.vehicles(requesterAddress).call();
     return vehicle.vehicleNumber;
   };
 
-  // 인증 요청 로그를 가져오는 함수
   const fetchAuthenticationLogs = async () => {
     try {
       setLoading(true);
       const contract = new web3.eth.Contract(contractABI, contractAddress);
 
-      // 요청 이벤트 조회
       const requestEvents = await contract.getPastEvents(
         "AuthenticationRequested",
         {
@@ -51,7 +48,6 @@ const LogAuthenticationPage = () => {
         }
       );
 
-      // 수락/거절 이벤트 조회
       const verificationEvents = await contract.getPastEvents(
         "AuthenticationVerified",
         {
@@ -61,7 +57,6 @@ const LogAuthenticationPage = () => {
         }
       );
 
-      // 수락/거절 여부를 확인하여 상태를 업데이트
       const logsWithDetails = await Promise.all(
         requestEvents
           .reverse()
@@ -85,7 +80,6 @@ const LogAuthenticationPage = () => {
               }
             );
 
-            // 수신자의 응답 상태 확인
             const verification = verificationEvents.find(
               (vEvent) =>
                 vEvent.returnValues.vehicleNumber ===
@@ -97,7 +91,7 @@ const LogAuthenticationPage = () => {
               ? verification.returnValues.success
                 ? "수락됨"
                 : "거절됨"
-              : "응답 대기 중";
+              : "요청 만료";
 
             return {
               vehicleNumber,
