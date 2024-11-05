@@ -101,6 +101,43 @@ const App = () => {
     return () => clearInterval(intervalId);
   }, [contract, account]);
 
+  useEffect(() => {
+    const pollForAuthenticationResult = async () => {
+      if (contract && account) {
+        try {
+          const events = await contract.getPastEvents(
+            "AuthenticationVerified",
+            {
+              filter: { requester: account },
+              fromBlock: "latest",
+            }
+          );
+
+          for (const event of events) {
+            const { vehicleNumber, success, receiver } = event.returnValues;
+            const ownerAddress = await contract.methods
+              .vehicleOwners(vehicleNumber)
+              .call();
+            const receiverVehicleInfo = await contract.methods
+              .vehicles(ownerAddress)
+              .call();
+
+            setResultModalMessage(
+              success
+                ? `${receiverVehicleInfo.vehicleNumber} 차량과 인증되었습니다.`
+                : `${receiverVehicleInfo.vehicleNumber} 차량이 인증을 거절했습니다.`
+            );
+          }
+        } catch (error) {
+          console.error("이벤트 가져오기 오류:", error);
+        }
+      }
+    };
+
+    const intervalId = setInterval(pollForAuthenticationResult, 3000);
+    return () => clearInterval(intervalId);
+  }, [contract, account]);
+
   const handleAccept = async () => {
     try {
       const { vcHash } = requestDetails;
