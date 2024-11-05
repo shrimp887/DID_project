@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Web3 from "web3";
 import contractABI from "../abis/AutonomousVehicleDID.json";
 
@@ -22,19 +22,19 @@ const LogAuthenticationPage = () => {
     loadWeb3();
   }, []);
 
-  useEffect(() => {
-    if (web3 && account) {
-      fetchAuthenticationLogs();
-    }
-  }, [web3, account]);
+  const getVehicleNumberByRequester = useCallback(
+    async (requesterAddress) => {
+      if (!web3) return null;
+      const contract = new web3.eth.Contract(contractABI, contractAddress);
+      const vehicle = await contract.methods.vehicles(requesterAddress).call();
+      return vehicle.vehicleNumber;
+    },
+    [web3, contractAddress]
+  );
 
-  const getVehicleNumberByRequester = async (requesterAddress) => {
-    const contract = new web3.eth.Contract(contractABI, contractAddress);
-    const vehicle = await contract.methods.vehicles(requesterAddress).call();
-    return vehicle.vehicleNumber;
-  };
+  const fetchAuthenticationLogs = useCallback(async () => {
+    if (!web3 || !account) return;
 
-  const fetchAuthenticationLogs = async () => {
     try {
       setLoading(true);
       const contract = new web3.eth.Contract(contractABI, contractAddress);
@@ -51,7 +51,6 @@ const LogAuthenticationPage = () => {
       const verificationEvents = await contract.getPastEvents(
         "AuthenticationVerified",
         {
-          filter: { receiver: account },
           fromBlock: 0,
           toBlock: "latest",
         }
@@ -80,18 +79,22 @@ const LogAuthenticationPage = () => {
               }
             );
 
-            const verification = verificationEvents.find(
+            const nextVerification = verificationEvents.find(
               (vEvent) =>
                 vEvent.returnValues.vehicleNumber ===
                   event.returnValues.vehicleNumber &&
-                vEvent.returnValues.requester === event.returnValues.requester
+                vEvent.returnValues.requester ===
+                  event.returnValues.requester &&
+                vEvent.returnValues.receiver === account &&
+                vEvent.blockNumber >= event.blockNumber
             );
 
-            const status = verification
-              ? verification.returnValues.success
+            let status = "요청 만료";
+            if (nextVerification) {
+              status = nextVerification.returnValues.success
                 ? "수락됨"
-                : "거절됨"
-              : "요청 만료";
+                : "거절됨";
+            }
 
             return {
               vehicleNumber,
@@ -107,7 +110,12 @@ const LogAuthenticationPage = () => {
       console.error("로그 가져오기 실패:", error);
       setLoading(false);
     }
-  };
+  }, [web3, account, contractAddress, getVehicleNumberByRequester]); // 의존성 추가
+
+  // `useEffect`에서 `fetchAuthenticationLogs` 호출
+  useEffect(() => {
+    fetchAuthenticationLogs();
+  }, [fetchAuthenticationLogs]);
 
   return (
     <div className="log-authentication-page">

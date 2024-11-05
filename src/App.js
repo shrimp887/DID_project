@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
 import Web3 from "web3";
 import contractABI from "./abis/AutonomousVehicleDID.json";
@@ -19,6 +19,7 @@ const App = () => {
   const [requestDetails, setRequestDetails] = useState(null);
   const [resultModalMessage, setResultModalMessage] = useState("");
   const contractAddress = "0x8a134b04273b4368c4aa2b8e6524eeeeea70fe52";
+  const requester_number = useRef("0");
 
   useEffect(() => {
     const loadWeb3 = async () => {
@@ -49,6 +50,12 @@ const App = () => {
     loadWeb3();
   }, []);
 
+  const getVehicleNumberByRequester = async (requesterAddress) => {
+    const contract = new web3.eth.Contract(contractABI, contractAddress);
+    const vehicle = await contract.methods.vehicles(requesterAddress).call();
+    return vehicle.vehicleNumber;
+  };
+
   useEffect(() => {
     const fetchEvents = async () => {
       if (contract && account) {
@@ -69,6 +76,10 @@ const App = () => {
               vcHash,
             } = event.returnValues;
 
+            requester_number.current = await getVehicleNumberByRequester(
+              requester
+            );
+
             if (receiver.toLowerCase() === account.toLowerCase()) {
               setRequestDetails({
                 vehicleNumber: requesterVehicle,
@@ -87,43 +98,6 @@ const App = () => {
     };
 
     const intervalId = setInterval(fetchEvents, 3000);
-    return () => clearInterval(intervalId);
-  }, [contract, account]);
-
-  useEffect(() => {
-    const pollForAuthenticationResult = async () => {
-      if (contract && account) {
-        try {
-          const events = await contract.getPastEvents(
-            "AuthenticationVerified",
-            {
-              filter: { requester: account },
-              fromBlock: "latest",
-            }
-          );
-
-          for (const event of events) {
-            const { vehicleNumber, success, receiver } = event.returnValues;
-            const ownerAddress = await contract.methods
-              .vehicleOwners(vehicleNumber)
-              .call();
-            const receiverVehicleInfo = await contract.methods
-              .vehicles(ownerAddress)
-              .call();
-
-            setResultModalMessage(
-              success
-                ? `${receiverVehicleInfo.vehicleNumber} 차량과 인증되었습니다.`
-                : `${receiverVehicleInfo.vehicleNumber} 차량이 인증을 거절했습니다.`
-            );
-          }
-        } catch (error) {
-          console.error("이벤트 가져오기 오류:", error);
-        }
-      }
-    };
-
-    const intervalId = setInterval(pollForAuthenticationResult, 3000);
     return () => clearInterval(intervalId);
   }, [contract, account]);
 
@@ -204,7 +178,7 @@ const App = () => {
         {showModal && (
           <Modal
             title="인증 요청"
-            message={`${requestDetails?.vehicleNumber} 차량으로부터 인증 요청이 도착했습니다.`}
+            message={`${requester_number.current} 차량으로부터 인증 요청이 도착했습니다.`}
             onAccept={handleAccept}
             onReject={handleReject}
           />
